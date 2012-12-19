@@ -1,6 +1,7 @@
 <?php
 class J_Post {
   public static $tests;
+  public static $partials;
   public static $formats;
 
   // For memoization
@@ -16,13 +17,16 @@ class J_Post {
     self::$tests[ $name ] = $lambda;
   }
 
+  public static function register_partial( $name, $lambda ) {
+    self::$partials[ $name ] = $lambda;
+  }
+
   public static function register_format( $name, $lambda, $default = false ) {
     self::$formats[ $name ] = $lambda;
     
     if( $default )
       self::$formats[ 'default' ] = $lambda;
   }
-
 
   public function __construct( $post, $preload = null ) {
     if( ! is_a( $post, 'WP_Post' ) )
@@ -46,11 +50,19 @@ class J_Post {
   }
 
   public function __call( $method_name, $arguments ) {
-    if( in_array( $method_name, self::$tests ) ) {
-      $arguments = array_unshift( $arguments, $this );
-      return self::$tests[ $method_name ]( implode( ', ', $arguments ) );
-    } else {
+    if( isset(self::$tests[ $method_name ] ) ) {
+      // If the called method is the name of a registered test
+      array_unshift( $arguments, $this );
+      return call_user_func_array( self::$tests[ $method_name ], $arguments );
+    } elseif( isset(self::$partials[ $method_name ] ) ) {
+      // If the called method is the name of a registered partial
+      array_unshift( $arguments, $this );
+      return call_user_func_array( self::$partials[ $method_name ], $arguments );
+    } elseif( method_exists($this->post, $method_name ) ) {
+      // If the called method is the name of a native WP_Post method
       return $this->post->$method_name( implode( ', ', $arguments ) );
+    } else {
+      return false;
     }
   }
 
