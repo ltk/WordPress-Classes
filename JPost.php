@@ -97,6 +97,22 @@ class J_Post {
     }
   }
 
+  public function connected_posts( $connection_type = null, $additional_post_list_query_params = null, $post_list_options = null ) {
+    if( is_null( $additional_post_list_query_params ) )
+      $additional_post_list_query_params = array();
+
+    if( is_null( $connection_type ) )
+      $connection_type = 'posts_to_' . $this->post->post_type . 's';
+    
+    $query_parameters = array(
+      'connected_type' => $connection_type,
+      'connected_items' => $this->post
+    );
+
+    $query_parameters = array_merge( $query_parameters, $additional_post_list_query_params );
+    return new J_PostList( $query_parameters, $post_list_options );
+  }
+
   public function excerpt( $more_link_options = null, $excerpt_length = null ) {
     if( ! isset( $this->excerpt ) )
       $this->excerpt = new J_Excerpt( $this->post, $more_link_options, $excerpt_length, false );

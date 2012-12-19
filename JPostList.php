@@ -10,9 +10,18 @@ class J_PostList {
   private $html_post_format;
 
 	public function __construct( $query = '', $options = null ) {
-		$this->query_object = new J_WP_Query( $query );
+		if( is_a( $query, 'WP_Query') ) {
+      $this->query_object = $query;
+    } else {
+      $this->query_object = new J_WP_Query( $query );
+    }
+    
     if( ! is_null( $options ) && is_array( $options ) && isset( $options['post_format'] ) ) {
       $this->html_post_format = $options['post_format'];
+    } 
+
+    if( ! is_null( $options ) && is_array( $options ) && isset( $options['list_class'] ) ) {
+      $this->html_list_class = $options['list_class'];
     } 
 	}
 
@@ -89,6 +98,7 @@ class J_PostList {
   }
 
   private function list_to_html() {
+
     return $this->html_open_list_tag() . $this->list_items_to_html() . $this->html_close_list_tag();
   }
 
@@ -96,7 +106,7 @@ class J_PostList {
     $return = null;
     while ( $this->have_posts() ):
       $return .= $this->the_post(); global $post; $post = new J_Post( $post ); 
-      $return .= $this->add_to_html_output( $this->list_item_to_html( $post ) );
+      $return .= $this->list_item_to_html( $post );
     endwhile;
 
     return $return;
@@ -104,11 +114,6 @@ class J_PostList {
 
   private function list_item_to_html( $list_item ) {
     return $list_item->to_html( $this->html_post_format );
-    // if( is_null( $this->html_post_format ) ) {
-    //   return $this->html_open_list_item_tag() . $list_item->linked_title() . $this->html_close_list_item_tag();
-    // } else {
-    //   return $this->html_open_list_item_tag() . call_user_func_array( $this->html_li_formatter, array($list_item) ) . $this->html_close_list_item_tag();
-    // }
   }
 
   private function html_open_list_tag() {
@@ -142,7 +147,7 @@ class J_PostList {
   }
 
   private function no_posts_message() {
-    return "<h1>You ain't got none posts, dawg!</h1>";
+    return "<div class='alert'>No items could be found.</div>";
   }
 
 
